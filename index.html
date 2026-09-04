@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>勋章查看</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    display: flex; justify-content: center; align-items: center;
+    min-height: 100vh; background: #1a1a1a; overflow: hidden;
+    -webkit-user-select: none; user-select: none;
+  }
+  .phone-frame {
+    position: relative; width: 375px; height: 812px; overflow: hidden;
+    border-radius: 20px; box-shadow: 0 0 40px rgba(0,0,0,0.5);
+  }
+  .bg {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    object-fit: cover;
+  }
+
+  .carousel-area {
+    position: absolute; top: 242px; left: 0; width: 375px; height: 220px;
+    overflow: visible; z-index: 5;
+  }
+  .carousel-track {
+    position: relative; width: 100%; height: 100%;
+    touch-action: pan-y;
+  }
+  .medal-large {
+    position: absolute; top: 50%; left: 50%;
+    transition: transform 0.35s cubic-bezier(0.25, 0.1, 0.25, 1),
+                opacity 0.35s cubic-bezier(0.25, 0.1, 0.25, 1),
+                width 0.35s cubic-bezier(0.25, 0.1, 0.25, 1),
+                height 0.35s cubic-bezier(0.25, 0.1, 0.25, 1);
+    will-change: transform, opacity, width, height;
+    cursor: pointer;
+  }
+  .medal-large img {
+    width: 100%; height: 100%; object-fit: contain;
+    pointer-events: none;
+  }
+  .medal-large.active {
+    width: 180px; height: 180px;
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1; z-index: 3;
+    filter: drop-shadow(0 4px 24px rgba(255, 180, 40, 0.35));
+  }
+  .medal-large.prev {
+    width: 100px; height: 100px;
+    transform: translate(calc(-50% - 185px), -50%) scale(1);
+    opacity: 0.4; z-index: 2;
+  }
+  .medal-large.next {
+    width: 100px; height: 100px;
+    transform: translate(calc(-50% + 185px), -50%) scale(1);
+    opacity: 0.4; z-index: 2;
+  }
+  .medal-large.hidden-left {
+    width: 100px; height: 100px;
+    transform: translate(calc(-50% - 320px), -50%) scale(0.8);
+    opacity: 0; z-index: 1; pointer-events: none;
+  }
+  .medal-large.hidden-right {
+    width: 100px; height: 100px;
+    transform: translate(calc(-50% + 320px), -50%) scale(0.8);
+    opacity: 0; z-index: 1; pointer-events: none;
+  }
+
+  .carousel-track.dragging .medal-large {
+    transition: none !important;
+  }
+
+  .indicators-wrapper {
+    position: absolute; top: 538px; left: 0; width: 375px; height: 54px;
+    z-index: 5; overflow: visible;
+  }
+  .indicators {
+    position: absolute; top: 0; left: 50%;
+    display: flex; gap: 56px; align-items: center;
+    height: 54px; padding: 9px 0;
+    transition: transform 0.35s cubic-bezier(0.25, 0.1, 0.25, 1);
+    will-change: transform;
+  }
+  .indicators.dragging { transition: none !important; }
+  .indicator {
+    width: 36px; height: 36px; border-radius: 8px; cursor: pointer;
+    overflow: hidden; flex-shrink: 0;
+    transition: opacity 0.35s cubic-bezier(0.25, 0.1, 0.25, 1),
+                transform 0.35s cubic-bezier(0.25, 0.1, 0.25, 1);
+  }
+  .indicator img {
+    width: 100%; height: 100%; object-fit: contain;
+    pointer-events: none;
+  }
+  .indicator.active { opacity: 1; transform: scale(1.05); }
+  .indicator.inactive { opacity: 0.4; transform: scale(1); }
+  .indicator.hidden { opacity: 0; transform: scale(0.8); pointer-events: none; }
+</style>
+</head>
+<body>
+
+<div class="phone-frame">
+  <img class="bg" src="assets/bg.png" alt="background">
+
+  <div class="carousel-area">
+    <div class="carousel-track" id="carouselTrack"></div>
+  </div>
+
+  <div class="indicators-wrapper">
+    <div class="indicators" id="indicators"></div>
+  </div>
+
+
+</div>
+
+<script>
+const medals = [
+  { img: 'assets/medal_1.png' },
+  { img: 'assets/medal_2.png' },
+  { img: 'assets/medal_3.png' },
+  { img: 'assets/medal_4.png' },
+  { img: 'assets/medal_5.png' },
+];
+
+let current = 2;
+let isDragging = false;
+let startX = 0;
+let dragDelta = 0;
+
+const track = document.getElementById('carouselTrack');
+const indicatorsEl = document.getElementById('indicators');
+const indItemWidth = 36;
+const indGap = 56;
+const indStep = indItemWidth + indGap;
+
+medals.forEach((m, i) => {
+  const div = document.createElement('div');
+  div.className = 'medal-large';
+  div.dataset.index = i;
+  div.innerHTML = `<img src="${m.img}" alt="">`;
+  track.appendChild(div);
+
+  const ind = document.createElement('div');
+  ind.className = 'indicator';
+  ind.dataset.index = i;
+  ind.innerHTML = `<img src="${m.img}" alt="">`;
+  ind.addEventListener('click', () => goTo(i));
+  indicatorsEl.appendChild(ind);
+});
+
+const largeEls = track.querySelectorAll('.medal-large');
+const indEls = indicatorsEl.querySelectorAll('.indicator');
+
+function getClass(i) {
+  const diff = i - current;
+  if (diff === 0) return 'active';
+  if (diff === -1) return 'prev';
+  if (diff === 1) return 'next';
+  if (diff < -1) return 'hidden-left';
+  return 'hidden-right';
+}
+
+function getIndOffset(idx) {
+  return -(idx * indStep + indItemWidth / 2);
+}
+
+function render() {
+  largeEls.forEach((el, i) => {
+    el.className = 'medal-large ' + getClass(i);
+  });
+  indEls.forEach((el, i) => {
+    const diff = Math.abs(i - current);
+    if (diff > 1) el.className = 'indicator hidden';
+    else if (i === current) el.className = 'indicator active';
+    else el.className = 'indicator inactive';
+  });
+  indicatorsEl.style.transform = `translateX(${getIndOffset(current)}px)`;
+}
+
+function goTo(index) {
+  if (index < 0 || index >= medals.length || index === current) return;
+  current = index;
+  render();
+}
+
+function applyDragOffset(dx) {
+  const t = Math.min(Math.abs(dx) / 185, 1);
+  const goingLeft = dx < 0;
+
+  largeEls.forEach((el, i) => {
+    const cls = getClass(i);
+    if (cls === 'active' || cls === 'prev' || cls === 'next') {
+      let fromOff, toOff, fromW, toW, fromOp, toOp;
+
+      if (cls === 'active') {
+        fromOff = 0; toOff = goingLeft ? -185 : 185;
+        fromW = 180; toW = 100; fromOp = 1; toOp = 0.4;
+      } else if (cls === 'prev') {
+        fromOff = -185;
+        toOff = goingLeft ? -320 : 0;
+        fromW = 100; toW = goingLeft ? 100 : 180;
+        fromOp = 0.4; toOp = goingLeft ? 0 : 1;
+      } else {
+        fromOff = 185;
+        toOff = goingLeft ? 0 : 320;
+        fromW = 100; toW = goingLeft ? 180 : 100;
+        fromOp = 0.4; toOp = goingLeft ? 1 : 0;
+      }
+
+      const off = fromOff + (toOff - fromOff) * t;
+      const w = fromW + (toW - fromW) * t;
+      const op = fromOp + (toOp - fromOp) * t;
+
+      el.style.width = w + 'px';
+      el.style.height = w + 'px';
+      el.style.transform = `translate(calc(-50% + ${off}px), -50%)`;
+      el.style.opacity = Math.max(0, Math.min(1, op));
+    }
+  });
+
+  const indDx = dx * (indStep / 185);
+  indicatorsEl.style.transform = `translateX(${getIndOffset(current) + indDx}px)`;
+}
+
+function clearDragStyles() {
+  largeEls.forEach(el => {
+    el.style.transform = '';
+    el.style.opacity = '';
+    el.style.width = '';
+    el.style.height = '';
+  });
+  indicatorsEl.style.transform = '';
+}
+
+track.addEventListener('touchstart', e => {
+  isDragging = true;
+  startX = e.touches[0].clientX;
+  dragDelta = 0;
+  track.classList.add('dragging');
+  indicatorsEl.classList.add('dragging');
+}, { passive: true });
+
+track.addEventListener('touchmove', e => {
+  if (!isDragging) return;
+  dragDelta = e.touches[0].clientX - startX;
+  if (current === 0 && dragDelta > 0) dragDelta *= 0.3;
+  if (current === medals.length - 1 && dragDelta < 0) dragDelta *= 0.3;
+  applyDragOffset(dragDelta);
+}, { passive: true });
+
+track.addEventListener('touchend', e => {
+  if (!isDragging) return;
+  isDragging = false;
+  track.classList.remove('dragging');
+  indicatorsEl.classList.remove('dragging');
+  clearDragStyles();
+
+  const absDelta = Math.abs(dragDelta);
+  if (absDelta > 25) {
+    if (dragDelta < 0 && current < medals.length - 1) goTo(current + 1);
+    else if (dragDelta > 0 && current > 0) goTo(current - 1);
+    else render();
+  } else {
+    render();
+  }
+  dragDelta = 0;
+});
+
+track.addEventListener('mousedown', e => {
+  isDragging = true;
+  startX = e.clientX;
+  dragDelta = 0;
+  track.classList.add('dragging');
+  indicatorsEl.classList.add('dragging');
+  e.preventDefault();
+});
+
+window.addEventListener('mousemove', e => {
+  if (!isDragging) return;
+  dragDelta = e.clientX - startX;
+  if (current === 0 && dragDelta > 0) dragDelta *= 0.3;
+  if (current === medals.length - 1 && dragDelta < 0) dragDelta *= 0.3;
+  applyDragOffset(dragDelta);
+});
+
+window.addEventListener('mouseup', () => {
+  if (!isDragging) return;
+  isDragging = false;
+  track.classList.remove('dragging');
+  indicatorsEl.classList.remove('dragging');
+  clearDragStyles();
+
+  const absDelta = Math.abs(dragDelta);
+  if (absDelta > 25) {
+    if (dragDelta < 0 && current < medals.length - 1) goTo(current + 1);
+    else if (dragDelta > 0 && current > 0) goTo(current - 1);
+    else render();
+  } else {
+    render();
+  }
+  dragDelta = 0;
+});
+
+largeEls.forEach(el => {
+  el.addEventListener('click', () => {
+    const i = parseInt(el.dataset.index);
+    if (i !== current) goTo(i);
+  });
+});
+
+render();
+</script>
+</body>
+</html>
