@@ -97,12 +97,31 @@
   .indicator.active { opacity: 1; transform: scale(1.05); }
   .indicator.inactive { opacity: 0.4; transform: scale(1); }
   .indicator.hidden { opacity: 0; transform: scale(0.8); pointer-events: none; }
+
+  .sparkle-container {
+    position: absolute; top: -20px; left: 110px; width: 155px; height: 240px;
+    z-index: 4; pointer-events: none; overflow: hidden;
+  }
+  .sparkle {
+    position: absolute; border-radius: 50%;
+    background: radial-gradient(circle, rgba(255,220,150,1) 0%, rgba(255,200,100,0.5) 40%, transparent 70%);
+    animation: sparkle-rise linear forwards;
+    opacity: 0;
+  }
+  @keyframes sparkle-rise {
+    0% { opacity: 0; transform: translate(0, 0) scale(0.4); }
+    15% { opacity: 1; }
+    60% { opacity: 0.7; }
+    100% { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(0.15); }
+  }
 </style>
 </head>
 <body>
 
 <div class="phone-frame">
   <img class="bg" src="assets/bg.png" alt="background">
+
+  <div class="sparkle-container" id="sparkleContainer"></div>
 
   <div class="carousel-area">
     <div class="carousel-track" id="carouselTrack"></div>
@@ -117,11 +136,11 @@
 
 <script>
 const medals = [
-  { img: 'assets/medal_1.png' },
-  { img: 'assets/medal_2.png' },
-  { img: 'assets/medal_3.png' },
-  { img: 'assets/medal_4.png' },
-  { img: 'assets/medal_5.png' },
+  { img: 'assets/medal_1.png', title: 'Rising Star Award', desc: 'Outstanding Newcomer. Recognizing exceptional new talent who demonstrated remarkable growth and potential in their first year.' },
+  { img: 'assets/medal_2.png', title: 'Innovation Pioneer', desc: 'Creative Excellence Award. Celebrating breakthrough ideas and innovative solutions that pushed boundaries and inspired the team.' },
+  { img: 'assets/medal_3.png', title: 'Seasonal Prestige Champion', desc: 'Team Quarterly Champion. Awarded to excellent teams for outstanding performance and great teamwork this quarter.' },
+  { img: 'assets/medal_4.png', title: 'Elite Performance Medal', desc: 'Top Performer Recognition. Honoring consistent excellence and dedication to achieving the highest standards of quality.' },
+  { img: 'assets/medal_5.png', title: 'Legacy Achievement', desc: 'Lifetime Contribution Award. Celebrating years of dedicated service and lasting impact on the organization\'s success.' },
 ];
 
 let current = 2;
@@ -311,6 +330,24 @@ largeEls.forEach(el => {
 });
 
 render();
+
+const sparkleBox = document.getElementById('sparkleContainer');
+function spawnSparkle() {
+  const dot = document.createElement('div');
+  dot.className = 'sparkle';
+  const size = Math.random() < 0.4 ? (2 + Math.random() * 3) : (7 + Math.random() * 8);
+  const x = Math.random() * 155;
+  const y = 130 + Math.random() * 110;
+  const dur = 2 + Math.random() * 2.5;
+  const delay = Math.random() * 0.5;
+  const driftX = (Math.random() - 0.5) * 60;
+  const riseY = -(60 + Math.random() * 100);
+  dot.style.cssText = `width:${size}px;height:${size}px;left:${x}px;top:${y}px;animation-duration:${dur}s;animation-delay:${delay}s;--dx:${driftX}px;--dy:${riseY}px;`;
+  sparkleBox.appendChild(dot);
+  setTimeout(() => dot.remove(), (dur + delay) * 1000);
+}
+setInterval(spawnSparkle, 180);
+for (let i = 0; i < 15; i++) spawnSparkle();
 </script>
 </body>
 </html>
