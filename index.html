@@ -4,6 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>勋章查看</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
@@ -21,7 +24,7 @@
   }
 
   .carousel-area {
-    position: absolute; top: 242px; left: 0; width: 375px; height: 220px;
+    position: absolute; top: 222px; left: 0; width: 375px; height: 220px;
     overflow: visible; z-index: 5;
   }
   .carousel-track {
@@ -30,10 +33,10 @@
   }
   .medal-large {
     position: absolute; top: 50%; left: 50%;
-    transition: transform 0.35s cubic-bezier(0.25, 0.1, 0.25, 1),
-                opacity 0.35s cubic-bezier(0.25, 0.1, 0.25, 1),
-                width 0.35s cubic-bezier(0.25, 0.1, 0.25, 1),
-                height 0.35s cubic-bezier(0.25, 0.1, 0.25, 1);
+    transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1),
+                opacity 0.4s cubic-bezier(0.22, 1, 0.36, 1),
+                width 0.4s cubic-bezier(0.22, 1, 0.36, 1),
+                height 0.4s cubic-bezier(0.22, 1, 0.36, 1);
     will-change: transform, opacity, width, height;
     cursor: pointer;
   }
@@ -73,22 +76,22 @@
   }
 
   .indicators-wrapper {
-    position: absolute; top: 538px; left: 0; width: 375px; height: 54px;
+    position: absolute; top: 528px; left: 0; width: 375px; height: 54px;
     z-index: 5; overflow: visible;
   }
   .indicators {
     position: absolute; top: 0; left: 50%;
     display: flex; gap: 56px; align-items: center;
     height: 54px; padding: 9px 0;
-    transition: transform 0.35s cubic-bezier(0.25, 0.1, 0.25, 1);
+    transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
     will-change: transform;
   }
   .indicators.dragging { transition: none !important; }
   .indicator {
     width: 36px; height: 36px; border-radius: 8px; cursor: pointer;
     overflow: hidden; flex-shrink: 0;
-    transition: opacity 0.35s cubic-bezier(0.25, 0.1, 0.25, 1),
-                transform 0.35s cubic-bezier(0.25, 0.1, 0.25, 1);
+    transition: opacity 0.4s cubic-bezier(0.22, 1, 0.36, 1),
+                transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
   }
   .indicator img {
     width: 100%; height: 100%; object-fit: contain;
@@ -98,8 +101,37 @@
   .indicator.inactive { opacity: 0.4; transform: scale(1); }
   .indicator.hidden { opacity: 0; transform: scale(0.8); pointer-events: none; }
 
+  .medal-info {
+    position: absolute; top: 120px; left: 0; width: 375px;
+    z-index: 6; text-align: center; pointer-events: none;
+    padding: 0 40px;
+  }
+  .medal-title-row {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    margin-bottom: 8px;
+  }
+  .medal-title-row .laurel {
+    width: 16px; height: 40px;
+    flex-shrink: 0;
+  }
+  .medal-title {
+    font-family: 'Roboto', sans-serif;
+    font-size: 20px; font-weight: 500;
+    background: linear-gradient(to right, #ffe0ac 20%, #fff8ec 50%, #ffe0ac 80%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: normal;
+    white-space: nowrap;
+  }
+  .medal-desc {
+    font-family: 'Roboto', sans-serif;
+    font-size: 14px; color: #e3bd7e;
+    line-height: 20px;
+  }
+
   .sparkle-container {
-    position: absolute; top: -20px; left: 110px; width: 155px; height: 240px;
+    position: absolute; top: -20px; left: 110px; width: 155px; height: 260px;
     z-index: 4; pointer-events: none; overflow: hidden;
   }
   .sparkle {
@@ -121,6 +153,15 @@
 <div class="phone-frame">
   <img class="bg" src="assets/bg.png" alt="background">
 
+  <div class="medal-info" id="medalInfo">
+    <div class="medal-title-row">
+      <img class="laurel" src="assets/laurel_left.svg" alt="">
+      <span class="medal-title" id="medalTitle"></span>
+      <img class="laurel" src="assets/laurel_right.svg" alt="" style="transform:scaleX(-1)">
+    </div>
+    <div class="medal-desc" id="medalDesc"></div>
+  </div>
+
   <div class="sparkle-container" id="sparkleContainer"></div>
 
   <div class="carousel-area">
@@ -136,11 +177,11 @@
 
 <script>
 const medals = [
-  { img: 'assets/medal_1.png', title: 'Rising Star Award', desc: 'Outstanding Newcomer. Recognizing exceptional new talent who demonstrated remarkable growth and potential in their first year.' },
-  { img: 'assets/medal_2.png', title: 'Innovation Pioneer', desc: 'Creative Excellence Award. Celebrating breakthrough ideas and innovative solutions that pushed boundaries and inspired the team.' },
-  { img: 'assets/medal_3.png', title: 'Seasonal Prestige Champion', desc: 'Team Quarterly Champion. Awarded to excellent teams for outstanding performance and great teamwork this quarter.' },
-  { img: 'assets/medal_4.png', title: 'Elite Performance Medal', desc: 'Top Performer Recognition. Honoring consistent excellence and dedication to achieving the highest standards of quality.' },
-  { img: 'assets/medal_5.png', title: 'Legacy Achievement', desc: 'Lifetime Contribution Award. Celebrating years of dedicated service and lasting impact on the organization\'s success.' },
+  { img: 'assets/medal_1.png', title: 'Rising Star Award', desc: 'Outstanding Newcomer. Recognizing exceptional new talent with remarkable growth potential.' },
+  { img: 'assets/medal_2.png', title: 'Innovation Pioneer', desc: 'Creative Excellence. Celebrating breakthrough ideas and innovative solutions.' },
+  { img: 'assets/medal_3.png', title: 'Seasonal Prestige Champion', desc: 'Team Quarterly Champion. Awarded for outstanding performance and great teamwork this quarter.' },
+  { img: 'assets/medal_4.png', title: 'Elite Performance Medal', desc: 'Top Performer Recognition. Honoring consistent excellence and dedication to quality.' },
+  { img: 'assets/medal_5.png', title: 'Legacy Achievement', desc: 'Lifetime Contribution. Celebrating years of dedicated service and lasting impact.' },
 ];
 
 let current = 2;
@@ -185,6 +226,9 @@ function getIndOffset(idx) {
   return -(idx * indStep + indItemWidth / 2);
 }
 
+const titleEl = document.getElementById('medalTitle');
+const descEl = document.getElementById('medalDesc');
+
 function render() {
   largeEls.forEach((el, i) => {
     el.className = 'medal-large ' + getClass(i);
@@ -196,6 +240,8 @@ function render() {
     else el.className = 'indicator inactive';
   });
   indicatorsEl.style.transform = `translateX(${getIndOffset(current)}px)`;
+  titleEl.textContent = medals[current].title;
+  descEl.textContent = medals[current].desc;
 }
 
 function goTo(index) {
@@ -205,42 +251,33 @@ function goTo(index) {
 }
 
 function applyDragOffset(dx) {
-  const t = Math.min(Math.abs(dx) / 185, 1);
-  const goingLeft = dx < 0;
-
+  const baseOff = { 'active': 0, 'prev': -185, 'next': 185, 'hidden-left': -320, 'hidden-right': 320 };
   largeEls.forEach((el, i) => {
     const cls = getClass(i);
-    if (cls === 'active' || cls === 'prev' || cls === 'next') {
-      let fromOff, toOff, fromW, toW, fromOp, toOp;
-
-      if (cls === 'active') {
-        fromOff = 0; toOff = goingLeft ? -185 : 185;
-        fromW = 180; toW = 100; fromOp = 1; toOp = 0.4;
-      } else if (cls === 'prev') {
-        fromOff = -185;
-        toOff = goingLeft ? -320 : 0;
-        fromW = 100; toW = goingLeft ? 100 : 180;
-        fromOp = 0.4; toOp = goingLeft ? 0 : 1;
-      } else {
-        fromOff = 185;
-        toOff = goingLeft ? 0 : 320;
-        fromW = 100; toW = goingLeft ? 180 : 100;
-        fromOp = 0.4; toOp = goingLeft ? 1 : 0;
-      }
-
-      const off = fromOff + (toOff - fromOff) * t;
-      const w = fromW + (toW - fromW) * t;
-      const op = fromOp + (toOp - fromOp) * t;
-
-      el.style.width = w + 'px';
-      el.style.height = w + 'px';
-      el.style.transform = `translate(calc(-50% + ${off}px), -50%)`;
-      el.style.opacity = Math.max(0, Math.min(1, op));
+    const b = baseOff[cls];
+    if (b === undefined) return;
+    const newOff = b + dx;
+    const absOff = Math.abs(newOff);
+    let w, op;
+    if (absOff <= 185) {
+      const t = absOff / 185;
+      w = 180 - 80 * t;
+      op = 1 - 0.6 * t;
+    } else if (absOff <= 320) {
+      const t = (absOff - 185) / 135;
+      w = 100;
+      op = 0.4 * (1 - t);
+    } else {
+      w = 100;
+      op = 0;
     }
+    el.style.width = w + 'px';
+    el.style.height = w + 'px';
+    el.style.transform = `translate(calc(-50% + ${newOff}px), -50%)`;
+    el.style.opacity = Math.max(0, Math.min(1, op));
+    el.style.zIndex = absOff < 100 ? 3 : (absOff < 250 ? 2 : 1);
   });
-
-  const indDx = dx * (indStep / 185);
-  indicatorsEl.style.transform = `translateX(${getIndOffset(current) + indDx}px)`;
+  indicatorsEl.style.transform = `translateX(${getIndOffset(current) + dx * (indStep / 185)}px)`;
 }
 
 function clearDragStyles() {
@@ -249,8 +286,8 @@ function clearDragStyles() {
     el.style.opacity = '';
     el.style.width = '';
     el.style.height = '';
+    el.style.zIndex = '';
   });
-  indicatorsEl.style.transform = '';
 }
 
 track.addEventListener('touchstart', e => {
@@ -272,18 +309,16 @@ track.addEventListener('touchmove', e => {
 track.addEventListener('touchend', e => {
   if (!isDragging) return;
   isDragging = false;
-  track.classList.remove('dragging');
-  indicatorsEl.classList.remove('dragging');
-  clearDragStyles();
-
   const absDelta = Math.abs(dragDelta);
   if (absDelta > 25) {
-    if (dragDelta < 0 && current < medals.length - 1) goTo(current + 1);
-    else if (dragDelta > 0 && current > 0) goTo(current - 1);
-    else render();
-  } else {
-    render();
+    if (dragDelta < 0 && current < medals.length - 1) current++;
+    else if (dragDelta > 0 && current > 0) current--;
   }
+  track.classList.remove('dragging');
+  indicatorsEl.classList.remove('dragging');
+  void track.offsetHeight;
+  clearDragStyles();
+  render();
   dragDelta = 0;
 });
 
@@ -307,18 +342,16 @@ window.addEventListener('mousemove', e => {
 window.addEventListener('mouseup', () => {
   if (!isDragging) return;
   isDragging = false;
-  track.classList.remove('dragging');
-  indicatorsEl.classList.remove('dragging');
-  clearDragStyles();
-
   const absDelta = Math.abs(dragDelta);
   if (absDelta > 25) {
-    if (dragDelta < 0 && current < medals.length - 1) goTo(current + 1);
-    else if (dragDelta > 0 && current > 0) goTo(current - 1);
-    else render();
-  } else {
-    render();
+    if (dragDelta < 0 && current < medals.length - 1) current++;
+    else if (dragDelta > 0 && current > 0) current--;
   }
+  track.classList.remove('dragging');
+  indicatorsEl.classList.remove('dragging');
+  void track.offsetHeight;
+  clearDragStyles();
+  render();
   dragDelta = 0;
 });
 
@@ -337,7 +370,7 @@ function spawnSparkle() {
   dot.className = 'sparkle';
   const size = Math.random() < 0.4 ? (2 + Math.random() * 3) : (7 + Math.random() * 8);
   const x = Math.random() * 155;
-  const y = 130 + Math.random() * 110;
+  const y = 110 + Math.random() * 130;
   const dur = 2 + Math.random() * 2.5;
   const delay = Math.random() * 0.5;
   const driftX = (Math.random() - 0.5) * 60;
