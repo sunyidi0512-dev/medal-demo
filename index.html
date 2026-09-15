@@ -131,7 +131,7 @@
   }
 
   .sparkle-container {
-    position: absolute; top: -20px; left: 110px; width: 155px; height: 260px;
+    position: absolute; top: -20px; left: 107.5px; width: 160px; height: 240px;
     z-index: 4; pointer-events: none; overflow: hidden;
   }
   .sparkle {
@@ -369,8 +369,8 @@ function spawnSparkle() {
   const dot = document.createElement('div');
   dot.className = 'sparkle';
   const size = Math.random() < 0.4 ? (2 + Math.random() * 3) : (7 + Math.random() * 8);
-  const x = Math.random() * 155;
-  const y = 110 + Math.random() * 130;
+  const x = Math.random() * 160;
+  const y = 100 + Math.random() * 120;
   const dur = 2 + Math.random() * 2.5;
   const delay = Math.random() * 0.5;
   const driftX = (Math.random() - 0.5) * 60;
